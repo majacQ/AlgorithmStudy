@@ -11,7 +11,7 @@ namespace Baekjoon_9095_sum_1_2_3
         static int get(int n)
         {
             while (table.Count < n + 1)
-                table.Add(table[table.Count - 1] + table[table.Count - 2] + table[table.Count - 3]);
+                table.Add(table.Skip(table.Count - 3).Sum());
 
             return table[n];
         }
@@ -20,7 +20,7 @@ namespace Baekjoon_9095_sum_1_2_3
         {
             int nTestcase = Convert.ToInt32(Console.ReadLine());
 
-            for(int i=0; i<nTestcase; i++)
+            for (int i = 0; i < nTestcase; i++)
             {
                 int n = Convert.ToInt32(Console.ReadLine());
                 Console.WriteLine(get(n));
