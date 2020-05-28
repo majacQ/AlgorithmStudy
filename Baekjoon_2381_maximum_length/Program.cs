@@ -11,23 +11,22 @@ namespace Baekjoon_2381_maximum_length
         static void Main(string[] args)
         {
             int N = Convert.ToInt32(Console.ReadLine());
-
-            Tuple<int, int> min = null;
-            Tuple<int, int> max = null;
-
-            Tuple<int, int> current;
-            for (int i=0;i<N;i++)
+            var points = Enumerable.Range(0, N).Select(i=>
             {
-                var input = Console.ReadLine().Split(' ').Select(token => Convert.ToInt32(token)).ToList();
+                var nums = Console.ReadLine().Split(' ').Select(token => Convert.ToInt32(token)).ToList();
+                return new Tuple<int, int>(nums[0], nums[1]);
+            }).ToList();
 
-                current = new Tuple<int, int>(input[0] + 1000000, input[1] + 1000000);
+            Tuple<int, int> base_bottom_left = new Tuple<int, int>(-1000000, -1000000);
+            var toUpRight = points.OrderBy(point => abs(point, base_bottom_left)).ToList();
+            int toUpRightMax = abs(toUpRight.FirstOrDefault(), toUpRight.LastOrDefault());
 
-                min = (min == null) ? current : new Tuple<int, int>(Math.Max(min.Item1, current.Item1), Math.Min(min.Item2, current.Item2));
-                max = (max == null) ? current : new Tuple<int, int>(Math.Min(max.Item1, current.Item1), Math.Max(max.Item2, current.Item2));
-            }
-            Console.WriteLine(min);
-            Console.WriteLine(max);
+            Tuple<int, int> base_top_left = new Tuple<int, int>(-1000000, 1000000);
+            var toBottomRight = points.OrderBy(point => abs(point, base_top_left)).ToList();
+            int tpBottomRightMax = abs(toBottomRight.FirstOrDefault(), toBottomRight.LastOrDefault());
 
+            Console.WriteLine(Math.Max(toUpRightMax, tpBottomRightMax));
         }
+        static int abs(Tuple<int, int> a, Tuple<int, int> b) => Math.Abs(a.Item1 - b.Item1) + Math.Abs(a.Item2 - b.Item2);
     }
 }
