@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Baekjoon_2655", "Baekjoon_2
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Baekjoon_2644", "Baekjoon_2644\Baekjoon_2644.csproj", "{BF7664B1-26F3-4330-AA82-67AA922EE3DA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Baekjoon_3055", "Baekjoon_3055\Baekjoon_3055.csproj", "{979C6E92-2AAE-44FF-8CB0-25B55B4B0EE8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{BF7664B1-26F3-4330-AA82-67AA922EE3DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF7664B1-26F3-4330-AA82-67AA922EE3DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BF7664B1-26F3-4330-AA82-67AA922EE3DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{979C6E92-2AAE-44FF-8CB0-25B55B4B0EE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{979C6E92-2AAE-44FF-8CB0-25B55B4B0EE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{979C6E92-2AAE-44FF-8CB0-25B55B4B0EE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{979C6E92-2AAE-44FF-8CB0-25B55B4B0EE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
