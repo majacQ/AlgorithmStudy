@@ -28,7 +28,7 @@ namespace Baekjoon_12467
 
         public Type[] this[int index] => matrix[index];
 
-        public Matrix(int _rows, int _cols, Func<int,int, Type> initializer)
+        public Matrix(int _rows, int _cols, Func<int, int, Type> initializer)
         {
             // make matrix
             matrix = Enumerable.Range(0, _rows).Select(r => new Type[_cols]).ToArray();
@@ -38,13 +38,13 @@ namespace Baekjoon_12467
 
         public void print()
         {
-            foreach(var r in matrix)
+            foreach (var r in matrix)
             {
                 Console.WriteLine(string.Join(' ', r.Select(c => c.ToString())));
             }
         }
 
-        public List<Tuple<int, int>> searchDFS(int r, int c, Func<int, int, bool> predicate, Func<int,int, bool> endCondition = null)
+        public List<Tuple<int, int>> searchDFS(int r, int c, Func<int, int, bool> predicate, Func<int, int, bool> endCondition = null)
         {
             List<Tuple<int, int>> result = new List<Tuple<int, int>>();
             Stack<Tuple<int, int>> q = new Stack<Tuple<int, int>>();
@@ -54,6 +54,7 @@ namespace Baekjoon_12467
                 var current = q.Peek();
                 q.Pop();
                 result.Add(current);
+
                 if (endCondition != null && endCondition(current.Item1, current.Item2))
                     break;
 
@@ -98,6 +99,16 @@ namespace Baekjoon_12467
         public void ForEach(Action<int, int> action) => Enumerable.Range(0, Rows).ToList().ForEach(r => Enumerable.Range(0, Cols).ToList().ForEach(c => action(r, c)));
 
         internal Matrix<Type> clone() => new Matrix<Type>(Rows, Cols, (r, c) => matrix[r][c]);
+
+        public bool isEdge(int r, int c) => r == 0 || r == Rows - 1 || c == 0 || c == Cols - 1;
+    }
+
+    class Node
+    {
+        public int height;
+        public int waterlevel;
+        public bool isInsideIsland;
+        public bool visit;
     }
 
     class Program
@@ -115,87 +126,92 @@ namespace Baekjoon_12467
 
                 var inputMatrix = Enumerable.Range(0, Rows).Select(row => Console.ReadLine().Split(' ').Select(token => Convert.ToInt32(token)).ToArray()).ToArray();
 
-                Matrix<int> matrix = new Matrix<int>(Rows, Cols, (r, c) => inputMatrix[r][c]);
+                Matrix<Node> matrix = new Matrix<Node>(Rows, Cols, (r, c) => new Node() { height = inputMatrix[r][c] });
 
                 int day = findDays(matrix, M);
 
                 Console.WriteLine($"Case #{t}: {day}");
-
             }
         }
 
-        private static int findDays(Matrix<int> matrix, int m)
+        private static int findDays(Matrix<Node> matrix, int m)
         {
             int day = 0;
-            while (!isEmpty(matrix))
+            while (!matrix.matrix.All(r => r.All(v => v.height == 0)))
             {
                 day++;
 
-                //Console.WriteLine($"Days {day}");
-                //Console.WriteLine($"Initial State");
-                //matrix.print();
-
                 // accumulate water
-                var waterlevel = matrix.clone();
-                var isInsideIsland = new Matrix<bool>(matrix.Rows, matrix.Cols, (r, c) => false);
                 matrix.ForEach((r, c) =>
                 {
-                    if (matrix[r][c] != 0)
-                        isInsideIsland[r][c] = true;
+                    // isInsideIsland
+                    if (matrix[r][c].height != 0)
+                        matrix[r][c].isInsideIsland = true;
                     else
                     {
-                        var connectedZero = matrix.searchDFS(r, c, (_r, _c) => (matrix[_r][_c] == 0), (_r, _c) => _r == 0 || _r == matrix.Rows - 1 || _c == 0 || _c == matrix.Cols - 1);
-                        isInsideIsland[r][c] = connectedZero.FindIndex(cell => cell.Item1 == 0 || cell.Item1 == matrix.Rows - 1 || cell.Item2 == 0 || cell.Item2 == matrix.Cols - 1) == -1;
+                        var connectedSealevelNodes = matrix.searchDFS(r, c,
+                            (_r, _c) => (matrix[_r][_c].height == 0),           // find all connected sea level nodes
+                            (_r, _c) => matrix.isEdge(_r, _c));                  // exit if reach to edge of map
+
+                        var lastNode = connectedSealevelNodes.Last();
+
+                        // if last connected sea level node is edge, (r,c) is inside island
+                        matrix[r][c].isInsideIsland = !matrix.isEdge(lastNode.Item1, lastNode.Item2) ? true : false;
                     }
+                    // visit
+                    matrix[r][c].visit = false;
                 });
                 List<Tuple<int, int>> boundaries = new List<Tuple<int, int>>();
-                var isBoundary = new Matrix<bool>(matrix.Rows, matrix.Cols, (r, c) => false);
                 matrix.ForEach((r, c) =>
                 {
-                    if (isInsideIsland[r][c] == false)
-                        return;
-
-                    if (r == 0 || r == matrix.Rows - 1 || c == 0 || c == matrix.Cols - 1)
-                        isBoundary[r][c] = true;
-                    else if (matrix.findNeighbor(r, c, (_r, _c) => isInsideIsland[_r][_c] == false).Count > 0)
-                        isBoundary[r][c] = true;
-
-                    if (isBoundary[r][c])
+                    // check if (r,c) is boundary node of island
+                    if ((matrix.isEdge(r, c) && matrix[r][c].isInsideIsland) || matrix.findNeighbor(r, c, (_r, _c) => matrix[_r][_c].isInsideIsland == false).Count > 0)
                         boundaries.Add(new Tuple<int, int>(r, c));
                 });
-                var visited = new Matrix<bool>(matrix.Rows, matrix.Cols, (r, c) => false);
-                boundaries.OrderBy(c => matrix[c.Item1][c.Item2]).ToList().ForEach(cell =>
+                while (boundaries.Count > 0)  // until no more boundaries left
                 {
-                    var flows = matrix.searchBFS(cell.Item1, cell.Item2, (_r, _c) => isInsideIsland[_r][_c] && !visited[_r][_c] && matrix[_r][_c] <= matrix[cell.Item1][cell.Item2]);
-                    flows.ForEach(_cell => waterlevel[_cell.Item1][_cell.Item2] = matrix[cell.Item1][cell.Item2]);
-                    flows.ForEach(_cell => visited[_cell.Item1][_cell.Item2] = true);
-                });
-                //Console.WriteLine($"After Accumulating Water State");
-                //waterlevel.print();
+                    // lowest boundary first
+                    boundaries = boundaries.OrderBy(cell => matrix[cell.Item1][cell.Item2].height).ToList();
+                    var current = boundaries.First();
+                    boundaries.RemoveAt(0);
+
+                    //
+                    int r = current.Item1;
+                    int c = current.Item2;
+
+                    // find all nodes that is 1.connected, 2.inside island, 3.lower than current boundary
+                    var sinkedNodes = matrix.searchDFS(r, c, (_r, _c) => matrix[_r][_c].isInsideIsland && !matrix[_r][_c].visit && matrix[_r][_c].height <= matrix[r][c].height);
+                    sinkedNodes.ForEach(n =>
+                    {
+                        matrix[n.Item1][n.Item2].waterlevel = matrix[r][c].height;
+                        matrix[n.Item1][n.Item2].visit = true;
+                    });
+
+                    // find new boundary from sinked nodes
+                    var newBoundaries = sinkedNodes.SelectMany(n =>
+                        // not yet visited, and not in boundary list
+                        matrix.findNeighbor(n.Item1, n.Item2, (_r, _c) => !matrix[_r][_c].visit && boundaries.FindIndex(_n => _n.Item1 == n.Item1 && _n.Item2 == n.Item2) == -1)
+                    );
+                    boundaries.AddRange(newBoundaries);
+                }
 
                 // erode
-                var erosion = waterlevel.clone();
-                erosion.ForEach((r, c) =>
+                matrix.ForEach((r, c) =>
                 {
-                    // find minNeighbor than me
-                    int minNeighbor = 100;
-                    var lowerNeighborsWaterlevel = erosion.findNeighbor(r, c, (_r, _c) => waterlevel[_r][_c] < waterlevel[r][c]).Select(cell => waterlevel[cell.Item1][cell.Item2]).ToList();
-                    if (r == 0 || r == erosion.Rows - 1 || c == 0 || c == erosion.Cols - 1)
-                        lowerNeighborsWaterlevel.Add(0);
-                    minNeighbor = (lowerNeighborsWaterlevel.Count == 0) ? waterlevel[r][c] : lowerNeighborsWaterlevel.Min();
+                    // find min lower waterlevel around me
+                    int minWaterLevel = 100;
+                    var lowerWaterLevels = matrix.findNeighbor(r, c, (_r, _c) => matrix[_r][_c].waterlevel < matrix[r][c].waterlevel).Select(n => matrix[n.Item1][n.Item2].waterlevel).ToList();
+                    if (matrix.isEdge(r, c))
+                        lowerWaterLevels.Add(0);
+                    minWaterLevel = (lowerWaterLevels.Count == 0) ? matrix[r][c].waterlevel : lowerWaterLevels.Min();
 
                     // calculate real erode
-                    int erode = Math.Min(waterlevel[r][c] - minNeighbor, m);
-                    erosion[r][c] = erode;
+                    int erode = Math.Min(matrix[r][c].waterlevel - minWaterLevel, m);
+                    matrix[r][c].height = Math.Max(matrix[r][c].height - erode, 0);
                 });
-                matrix.ForEach((r, c) => matrix[r][c] = Math.Max(matrix[r][c] - erosion[r][c], 0));
-                //Console.WriteLine($"After Erosion State");
-                //matrix.print();
-
             }
             return day;
         }
 
-        private static bool isEmpty(Matrix<int> matrix) => matrix.matrix.All(r => r.All(v => v == 0));
     }
 }
